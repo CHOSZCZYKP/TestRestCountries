@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -37,7 +38,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
-    private TextView countryNameTextView;
+    //private TextView countryNameTextView;
     private ImageView flagImageView;
     private Spinner regionSpinner;
     private EditText countryInputEditText;
@@ -59,7 +60,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        countryNameTextView = findViewById(R.id.countryNameTextView);
+        // Sprawdzenie połączenia z internetem
+        if (!isNetworkAvailable()) {
+            showNoInternetDialog();
+            return;
+        }
+
+        //countryNameTextView = findViewById(R.id.countryNameTextView);
         flagImageView = findViewById(R.id.flagImageView);
         regionSpinner = findViewById(R.id.regionSpinner);
         countryInputEditText = findViewById(R.id.countryInputEditText);
@@ -96,12 +103,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if (europeanCountries != null && !europeanCountries.isEmpty()) {
                     checkAnswer();
                     currentCountryIndex = (currentCountryIndex + 1) % europeanCountries.size();
-                    displayCountry(europeanCountries.get(currentCountryIndex));
 
+                    // Resetowanie wyniku po przejściu przez wszystkie kraje
+                    if (currentCountryIndex == 0) {
+                        resetScore();
+                    }
+
+                    displayCountry(europeanCountries.get(currentCountryIndex));
                     wasShaked = false;
                 }
             }
         });
+
 
         //Button submitAnswerButton = findViewById(R.id.submitAnswerButton);
         //submitAnswerButton.setOnClickListener(v -> checkAnswer());
@@ -192,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void fetchCountriesByRegion(String region) {
         if (!isNetworkAvailable()) {
-            Toast.makeText(MainActivity.this, "No internet connection available", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "No internet connection available, region hasn't changed.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -237,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void displayCountry(Country country) {
         if (country != null && country.name != null && country.flags != null) {
-            countryNameTextView.setText(country.name.common != null ? country.name.common : "Unknown");
+            //countryNameTextView.setText(country.name.common != null ? country.name.common : "Unknown");
             Picasso.get().load(country.flags.png).into(flagImageView);
         }
     }
@@ -267,5 +280,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         }
         return false;
+    }
+
+    private void resetScore() {
+        int finalScore = correctAnswers;
+        correctAnswers = 0;
+        scoreTextView.setText("Score: " + correctAnswers + " / " + europeanCountries.size());
+
+        new AlertDialog.Builder(this)
+                .setTitle("Congratulations, you have completed the quiz.")
+                .setMessage("You scored " + finalScore + " out of " + europeanCountries.size() + "!")
+                .setPositiveButton("OK", (dialog, which) ->dialog.dismiss())
+                .show();
+    }
+
+    private void showNoInternetDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("No Internet Connection")
+                .setMessage("This app requires an internet connection to work. Please connect to the internet and try again.")
+                .setCancelable(false)
+                .setPositiveButton("OK", (dialog, which) -> finish())
+                .show();
     }
 }
