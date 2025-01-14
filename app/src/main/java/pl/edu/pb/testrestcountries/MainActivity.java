@@ -60,7 +60,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // Sprawdzenie połączenia z internetem
         if (!isNetworkAvailable()) {
             showNoInternetDialog();
             return;
@@ -72,13 +71,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         countryInputEditText = findViewById(R.id.countryInputEditText);
         scoreTextView = findViewById(R.id.scoreTextView);
 
-        regionSpinner.setSelection(0); // Wybór "All" jako domyślny
-// Ustaw adapter dla spinnera
+        regionSpinner.setSelection(0); //wybór "All"
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, regions);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         regionSpinner.setAdapter(adapter);
 
-// Listener dla zmiany regionu
+
         regionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -89,12 +88,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Nie wykonuj nic, jeśli nic nie zostało wybrane
+
             }
         });
-
-
-        //fetchEuropeanCountries();
 
         Button switchCountryButton = findViewById(R.id.switchCountryButton);
         switchCountryButton.setOnClickListener(new View.OnClickListener() {
@@ -104,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     checkAnswer();
                     currentCountryIndex = (currentCountryIndex + 1) % europeanCountries.size();
 
-                    // Resetowanie wyniku po przejściu przez wszystkie kraje
                     if (currentCountryIndex == 0) {
                         resetScore();
                     }
@@ -115,17 +110,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
 
-
-        //Button submitAnswerButton = findViewById(R.id.submitAnswerButton);
-        //submitAnswerButton.setOnClickListener(v -> checkAnswer());
-
-        // Inicjalizacja menedżera sensorów
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
 
-        // Rejestracja czujnika
         if (accelerometer != null) {
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
         } else {
@@ -157,16 +146,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             long currentTime = System.currentTimeMillis();
 
-            // Odczekaj 200 ms przed kolejnym odczytem
             if ((currentTime - lastUpdateTime) > 200) {
                 lastUpdateTime = currentTime;
 
-                // Odczytywanie wartości przyspieszenia
                 float x = event.values[0];
                 float y = event.values[1];
                 float z = event.values[2];
 
-                // Obliczenie siły wstrząsu
+                //siła wstrząsu
                 float shakeMagnitude = (float) Math.sqrt(x * x + y * y + z * z);
 
                 if (shakeMagnitude > SHAKE_THRESHOLD) {
@@ -178,13 +165,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Nie wymagane w tym przypadku
     }
 
     private void onShake() {
-        // Co zrobić po wykryciu potrząsania?
-        //Toast.makeText(this, "Shake detected!", Toast.LENGTH_SHORT).show();
-        // Tutaj dodaj akcję, np. zmień kraj lub wywołaj inną funkcję
 
         if (europeanCountries != null && !europeanCountries.isEmpty()) {
             Country currentCountry = europeanCountries.get(currentCountryIndex);
@@ -213,17 +196,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Call<List<Country>> call;
 
         if (region.equals("All")) {
-            call = api.getAllCountries(); // Pobieranie wszystkich krajów
+            call = api.getAllCountries();
         } else {
-            call = api.getCountriesByRegion(region); // Pobieranie krajów z wybranego regionu
+            call = api.getCountriesByRegion(region);
         }
 
-        call.enqueue(new Callback<List<Country>>() {
+        call.enqueue(new Callback<List<Country>>() { // Asynchroniczne zapytanie
             @Override
             public void onResponse(Call<List<Country>> call, Response<List<Country>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     europeanCountries = response.body();
-                    currentCountryIndex = 0; // Resetuj indeks kraju
+                    currentCountryIndex = 0;
                     correctAnswers = 0;
 
                     //int countryCount = europeanCountries.size();
